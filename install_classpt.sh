@@ -32,7 +32,11 @@ OS=$(uname -s)
 
 # Set environment variables.
 if [[ ${OS} = 'Darwin' ]]; then
-    export MACOSX_DEPLOYMENT_TARGET=11.0
+    if [[ $(uname -m) = 'arm64' ]]; then
+        export MACOSX_DEPLOYMENT_TARGET=11.0
+    elif [[ $(uname -m) = 'x86_64' ]]; then
+        export MACOSX_DEPLOYMENT_TARGET=10.9
+    fi
 fi
 
 
@@ -46,8 +50,8 @@ if [[ "$ans_newenv" = 'y' ]]; then
     # Ask for the environment name.
     read -p "====> Enter the name of the new environment: " env_name
     if [[ -z "$env_name" ]]; then
-        echo "Warning: Empty environment name is reset to 'triposh' by default."
-        env_name='triposh'
+        echo "Warning: Empty environment name is reset to 'classpt' by default."
+        env_name='classpt'
     fi
 
     # Detect existing environment.
@@ -106,6 +110,32 @@ echo "Activated Conda environment: '${CONDA_DEFAULT_ENV}'"
 
 
 # ========================================================================
+# Auto-Installation
+# ========================================================================
+
+echo "The installation wizard offers a guided installation process as well as an auto-installation process."
+echo "The latter is recommended only for a clean directory and Conda environment."
+
+read -p "==> Auto-install all packages and dependencies? (yes/[no]) " ans_auto
+ans_auto=$(filter_ans "$ans_auto")
+if [[ "$ans_auto" = 'y' ]]; then
+    echo "Auto-installing all packages and dependencies."
+    echo "The installation process may take a while."
+    echo "Press Ctrl+C to abort the installation."
+    sleep 3
+
+    # Set all flags to 'yes'.
+    ans_compiler='y'
+    ans_openmp='y'
+    ans_core='y'
+
+    ans_classpt='y'
+    ans_rmclasspt='y'
+    ans_openblas='y'
+fi
+
+
+# ========================================================================
 # Dependencies
 # ========================================================================
 
@@ -114,8 +144,10 @@ echo "Activated Conda environment: '${CONDA_DEFAULT_ENV}'"
 # ------------------------------------------------------------------------
 
 # Install compiler suite.
-read -p "==> Install Conda compiler suite? (yes/[no]) " ans_compiler
-ans_compiler=$(filter_ans "$ans_compiler")
+if [[ -z "ans_compiler" ]]; then
+    read -p "==> Install Conda compiler suite? (yes/[no]) " ans_compiler
+    ans_compiler=$(filter_ans "$ans_compiler")
+fi
 if [[ "$ans_compiler" = 'y' ]]; then
     echo "Installing Conda compiler suite."
     conda install cxx-compiler c-compiler -y
@@ -134,8 +166,10 @@ if [[ -z "$CXX" ]]; then
 fi
 
 # Install OpenMP library.
-read -p "==> Install OpenMP library? (yes/[no]) " ans_openmp
-ans_openmp=$(filter_ans "$ans_openmp")
+if [[ -z "$ans_openmp" ]]; then
+    read -p "==> Install OpenMP library? (yes/[no]) " ans_openmp
+    ans_openmp=$(filter_ans "$ans_openmp")
+fi
 if [[ "$ans_openmp" = 'y' ]]; then
     echo "Installing OpenMP library."
     if [[ "$OS" = 'Darwin' ]]; then
@@ -151,8 +185,10 @@ if [[ "$ans_openmp" = 'y' ]]; then
 fi
 
 # Install core packages.
-read -p "==> Install core packages including Python and Pip? (yes/[no]) " ans_core
-ans_core=$(filter_ans "$ans_core")
+if [[ -z "$ans_core" ]]; then
+    read -p "==> Install core packages including Python and Pip? (yes/[no]) " ans_core
+    ans_core=$(filter_ans "$ans_core")
+fi
 if [[ "$ans_core" = 'y' ]]; then
     echo "Installing core packages."
     conda install python pip -y
@@ -172,12 +208,16 @@ fi
 # CLASS-PT
 # ------------------------------------------------------------------------
 
-read -p "==> Install CLASS-PT? (yes/[no]) " ans_classpt
-ans_classpt=$(filter_ans "$ans_classpt")
+if [[ -z "$ans_classpt" ]]; then
+    read -p "==> Install CLASS-PT? (yes/[no]) " ans_classpt
+    ans_classpt=$(filter_ans "$ans_classpt")
+fi
 if [[ "$ans_classpt" = 'y' ]]; then
     # Install OpenBLAS library
-    read -p "====> Install OpenBLAS library as a CLASS-PT dependency? (yes/[no]) " ans_openblas
-    ans_openblas=$(filter_ans "$ans_openblas")
+    if [[ -z "$ans_openblas" ]]; then
+        read -p "====> Install OpenBLAS library as a CLASS-PT dependency? (yes/[no]) " ans_openblas
+        ans_openblas=$(filter_ans "$ans_openblas")
+    fi
     if [[ "$ans_openblas" = 'y' ]]; then
         echo "Installing OpenBLAS library."
         conda install openblas -y
@@ -195,8 +235,10 @@ if [[ "$ans_classpt" = 'y' ]]; then
     echo "Installing CLASS-PT."
 
     if [[ -d "./CLASS-PT" ]]; then
-        read -p "====> Remove existing CLASS-PT directory? (yes/[no]) " ans_rmclasspt
-        ans_rmclasspt=$(filter_ans "$ans_rmclasspt")
+        if [[ -z "$ans_rmclasspt" ]]; then
+            read -p "====> Remove existing CLASS-PT directory? (yes/[no]) " ans_rmclasspt
+            ans_rmclasspt=$(filter_ans "$ans_rmclasspt")
+        fi
         if [[ "$ans_rmclasspt" = 'y' ]]; then
             rm -rf ./CLASS-PT
         fi

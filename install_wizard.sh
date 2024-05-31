@@ -33,7 +33,11 @@ OS=$(uname -s)
 
 # Set environment variables.
 if [[ ${OS} = 'Darwin' ]]; then
-    export MACOSX_DEPLOYMENT_TARGET=11.0
+    if [[ $(uname -m) = 'arm64' ]]; then
+        export MACOSX_DEPLOYMENT_TARGET=11.0
+    elif [[ $(uname -m) = 'x86_64' ]]; then
+        export MACOSX_DEPLOYMENT_TARGET=10.9
+    fi
 fi
 
 
