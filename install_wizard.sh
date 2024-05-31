@@ -258,6 +258,7 @@ if [[ "$ans_classpt" = 'y' ]]; then
         fi
         if [[ "$ans_rmclasspt" = 'y' ]]; then
             rm -rf ./CLASS-PT
+            git clone https://github.com/Michalychforever/CLASS-PT.git
         fi
     else
         git clone https://github.com/Michalychforever/CLASS-PT.git
@@ -451,11 +452,12 @@ if [[ "$ans_matry" = 'y' ]]; then
         fi
         if [[ "$ans_rmmatry" = 'y' ]]; then
             rm -rf ./Matryoshka
+            git clone https://github.com/JDonaldM/Matryoshka
         fi
     else
         git clone https://github.com/JDonaldM/Matryoshka
     fi
-    cd ./Matryoshka
+    cd ./Matryoshka && git restore .
     python -m pip install -vvv -e .
 
     if [[ $? -eq 0 ]]; then
@@ -517,11 +519,14 @@ if [[ "$ans_bicker" = 'y' ]]; then
         fi
         if [[ "$ans_rmbicker" = 'y' ]]; then
             rm -rf ./BICKER
+            curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
+            unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
         fi
+    else
+        curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
+        unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
     fi
-    curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
-    unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
-    cd ./BICKER
+    cd ./BICKER && git restore .
 
     python -m pip install -vvv -e .
     if [[ $? -eq 0 ]]; then
@@ -551,6 +556,7 @@ if [[ -d "./TripoSH-Model" ]]; then
     fi
     if [[ "$ans_rmmod" = 'y' ]]; then
         rm -rf ./TripoSH-Model
+        git clone https://github.com/ROEcosmology/TripoSH-Model
     fi
 else
     git clone https://github.com/ROEcosmology/TripoSH-Model
@@ -581,6 +587,7 @@ if [[ -d "./TripoSH-Fitting" ]]; then
     fi
     if [[ "$ans_rmfit" = 'y' ]]; then
         rm -rf ./TripoSH-Fitting
+        git clone https://github.com/ROEcosmology/TripoSH-Fitting
     fi
 else
     git clone https://github.com/ROEcosmology/TripoSH-Fitting
