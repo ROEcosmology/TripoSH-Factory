@@ -218,7 +218,7 @@ if [[ "$ans_classpt" = 'y' ]]; then
 
     sed -i "s|/Users/gcabass/anaconda3/envs/openblas_test/include|${CONDA_INCLUDE}|g" python/setup.py
     sed -i "s|/Users/gcabass/anaconda3/envs/openblas_test/lib/libopenblas.dylib|-L${CONDA_LIB}' '-lopenblas|g" python/setup.py
-    sed -i "s|'-lgomp'||g" python/setup.py
+    sed -i "s|'-lgomp'|${LDFLAG_OMP}|g" python/setup.py
 
     make clean
     make
@@ -289,7 +289,7 @@ read -p "==> Install pocoMC? (yes/[no]) " ans_pmc
 ans_pmc=$(filter_ans "$ans_pmc")
 if [[ "$ans_pmc" = 'y' ]]; then
     echo "Installing pocoMC."
-    python -m pip install pocomc
+    python -m pip install -vvv pocomc
     if [[ $? -eq 0 ]]; then
         echo "Installed pocoMC."
     else
@@ -425,7 +425,7 @@ if [[ "$ans_bicker" = 'y' ]]; then
         fi
     fi
     curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
-    unzip BICKER.zip && rm BICKER.zip
+    unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
     cd ./BICKER
 
     python -m pip install -vvv -e .
