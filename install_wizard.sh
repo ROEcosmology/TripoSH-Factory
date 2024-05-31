@@ -107,6 +107,52 @@ echo "Activated Conda environment: '${CONDA_DEFAULT_ENV}'"
 
 
 # ========================================================================
+# Auto-Installation
+# ========================================================================
+
+echo "The installation wizard offers a guided installation process as well as an auto-installation process."
+echo "The latter is recommended only for a clean directory and Conda environment."
+
+read -p "==> Auto-install all packages and dependencies? (yes/[no]) " ans_auto
+ans_auto=$(filter_ans "$ans_auto")
+if [[ "$ans_auto" = 'y' ]]; then
+    echo "Auto-installing all packages and dependencies."
+    echo "The installation process may take a while."
+    echo "Press Ctrl+C to abort the installation."
+    sleep 3
+
+    # Set all flags to 'yes'.
+    ans_compiler='y'
+    ans_openmp='y'
+    ans_core='y'
+
+    ans_classpt='y'
+    ans_rmclasspt='y'
+    ans_openblas='y'
+
+    ans_gslfftw='y'
+    ans_libcuba='y'
+
+    ans_iminuit='y'
+    ans_pmc='y'
+
+    ans_matry='y'
+    ans_rmmatry='y'
+    ans_tf='y'
+    ans_numba='y'
+    ans_astropy='y'
+    ans_mpl='y'
+
+    ans_bicker='y'
+    ans_rmbicker='y'
+    ans_scipy='y'
+
+    ans_rmmod='y'
+    ans_rmfit='y'
+fi
+
+
+# ========================================================================
 # Dependencies
 # ========================================================================
 
@@ -115,8 +161,10 @@ echo "Activated Conda environment: '${CONDA_DEFAULT_ENV}'"
 # ------------------------------------------------------------------------
 
 # Install compiler suite.
-read -p "==> Install Conda compiler suite? (yes/[no]) " ans_compiler
-ans_compiler=$(filter_ans "$ans_compiler")
+if [[ -z "ans_compiler" ]]; then
+    read -p "==> Install Conda compiler suite? (yes/[no]) " ans_compiler
+    ans_compiler=$(filter_ans "$ans_compiler")
+fi
 if [[ "$ans_compiler" = 'y' ]]; then
     echo "Installing Conda compiler suite."
     conda install cxx-compiler c-compiler -y
@@ -135,8 +183,10 @@ if [[ -z "$CXX" ]]; then
 fi
 
 # Install OpenMP library.
-read -p "==> Install OpenMP library? (yes/[no]) " ans_openmp
-ans_openmp=$(filter_ans "$ans_openmp")
+if [[ -z "$ans_openmp" ]]; then
+    read -p "==> Install OpenMP library? (yes/[no]) " ans_openmp
+    ans_openmp=$(filter_ans "$ans_openmp")
+fi
 if [[ "$ans_openmp" = 'y' ]]; then
     echo "Installing OpenMP library."
     if [[ "$OS" = 'Darwin' ]]; then
@@ -152,8 +202,10 @@ if [[ "$ans_openmp" = 'y' ]]; then
 fi
 
 # Install core packages.
-read -p "==> Install core packages including Python and Pip? (yes/[no]) " ans_core
-ans_core=$(filter_ans "$ans_core")
+if [[ -z "$ans_core" ]]; then
+    read -p "==> Install core packages including Python and Pip? (yes/[no]) " ans_core
+    ans_core=$(filter_ans "$ans_core")
+fi
 if [[ "$ans_core" = 'y' ]]; then
     echo "Installing core packages."
     conda install python pip -y
@@ -169,12 +221,16 @@ fi
 # CLASS-PT
 # ------------------------------------------------------------------------
 
-read -p "==> Install CLASS-PT? (yes/[no]) " ans_classpt
-ans_classpt=$(filter_ans "$ans_classpt")
+if [[ -z "$ans_classpt" ]]; then
+    read -p "==> Install CLASS-PT? (yes/[no]) " ans_classpt
+    ans_classpt=$(filter_ans "$ans_classpt")
+fi
 if [[ "$ans_classpt" = 'y' ]]; then
     # Install OpenBLAS library
-    read -p "====> Install OpenBLAS library as a CLASS-PT dependency? (yes/[no]) " ans_openblas
-    ans_openblas=$(filter_ans "$ans_openblas")
+    if [[ -z "$ans_openblas" ]]; then
+        read -p "====> Install OpenBLAS library as a CLASS-PT dependency? (yes/[no]) " ans_openblas
+        ans_openblas=$(filter_ans "$ans_openblas")
+    fi
     if [[ "$ans_openblas" = 'y' ]]; then
         echo "Installing OpenBLAS library."
         conda install openblas -y
@@ -192,8 +248,10 @@ if [[ "$ans_classpt" = 'y' ]]; then
     echo "Installing CLASS-PT."
 
     if [[ -d "./CLASS-PT" ]]; then
-        read -p "====> Remove existing CLASS-PT directory? (yes/[no]) " ans_rmclasspt
-        ans_rmclasspt=$(filter_ans "$ans_rmclasspt")
+        if [[ -z "$ans_rmclasspt" ]]; then
+            read -p "====> Remove existing CLASS-PT directory? (yes/[no]) " ans_rmclasspt
+            ans_rmclasspt=$(filter_ans "$ans_rmclasspt")
+        fi
         if [[ "$ans_rmclasspt" = 'y' ]]; then
             rm -rf ./CLASS-PT
         fi
@@ -241,8 +299,10 @@ fi
 # GSL & FFTW
 # ------------------------------------------------------------------------
 
-read -p "==> Install GSL and FFTW libraries? (yes/[no]) " ans_gslfftw
-ans_gslfftw=$(filter_ans "$ans_gslfftw")
+if [[ -z "$ans_gslfftw" ]]; then
+    read -p "==> Install GSL and FFTW libraries? (yes/[no]) " ans_gslfftw
+    ans_gslfftw=$(filter_ans "$ans_gslfftw")
+fi
 if [[ "$ans_gslfftw" = 'y' ]]; then
     echo "Installing GSL and FFTW libraries."
     conda install gsl fftw -y
@@ -258,8 +318,10 @@ fi
 # libcuba
 # ------------------------------------------------------------------------
 
-read -p "==> Install Cuba library? (yes/[no]) " ans_libcuba
-ans_libcuba=$(filter_ans "$ans_libcuba")
+if [[ -z "$ans_libcuba" ]]; then
+    read -p "==> Install Cuba library? (yes/[no]) " ans_libcuba
+    ans_libcuba=$(filter_ans "$ans_libcuba")
+fi
 if [[ "$ans_libcuba" = 'y' ]]; then
     echo "Installing Cuba library."
     conda install libcuba -y
@@ -276,8 +338,10 @@ fi
 # ------------------------------------------------------------------------
 
 # Install iminuit.
-read -p "==> Install iminuit? (yes/[no]) " ans_iminuit
-ans_iminuit=$(filter_ans "$ans_iminuit")
+if [[ -z "$ans_iminuit" ]]; then
+    read -p "==> Install iminuit? (yes/[no]) " ans_iminuit
+    ans_iminuit=$(filter_ans "$ans_iminuit")
+fi
 if [[ "$ans_iminuit" = 'y' ]]; then
     echo "Installing iminuit."
     conda install iminuit -y
@@ -289,8 +353,10 @@ if [[ "$ans_iminuit" = 'y' ]]; then
 fi
 
 # Install pocoMC.
-read -p "==> Install pocoMC? (yes/[no]) " ans_pmc
-ans_pmc=$(filter_ans "$ans_pmc")
+if [[ -z "$ans_pmc" ]]; then
+    read -p "==> Install pocoMC? (yes/[no]) " ans_pmc
+    ans_pmc=$(filter_ans "$ans_pmc")
+fi
 if [[ "$ans_pmc" = 'y' ]]; then
     echo "Installing pocoMC."
     python -m pip install -vvv pocomc
@@ -306,25 +372,31 @@ fi
 # Matryoshka
 # ------------------------------------------------------------------------
 
-read -p "==> Install Matryoshka? (yes/[no]) " ans_matry
-ans_matry=$(filter_ans "$ans_matry")
+if [[ -z "$ans_matry" ]]; then
+    read -p "==> Install Matryoshka? (yes/[no]) " ans_matry
+    ans_matry=$(filter_ans "$ans_matry")
+fi
 if [[ "$ans_matry" = 'y' ]]; then
-    # Install Matplotlib.
-    read -p "====> Install Matplotlib as a Matryoshka dependency? (yes/[no]) " ans_mpl
-    ans_mpl=$(filter_ans "$ans_mpl")
-    if [[ "$ans_mpl" = 'y' ]]; then
-        echo "Installing Matplotlib."
-        conda install matplotlib -y
+    # Install Tensorflow.
+    if [[ -z "$ans_tf" ]]; then
+        read -p "====> Install Tensorflow as a Matryoshka dependency? (yes/[no]) " ans_tf
+        ans_tf=$(filter_ans "$ans_tf")
+    fi
+    if [[ "$ans_tf" = 'y' ]]; then
+        echo "Installing Tensorflow."
+        conda install tensorflow -y
         if [[ $? -eq 0 ]]; then
-            echo "Installed Matplotlib."
+            echo "Installed Tensorflow."
         else
-            echo "Warning: Failed to install Matplotlib."
+            echo "Warning: Failed to install Tensorflow."
         fi
     fi
 
     # Install Numba.
-    read -p "====> Install Numba as a Matryoshka dependency? (yes/[no]) " ans_numba
-    ans_numba=$(filter_ans "$ans_numba")
+    if [[ -z "$ans_numba" ]]; then
+        read -p "====> Install Numba as a Matryoshka dependency? (yes/[no]) " ans_numba
+        ans_numba=$(filter_ans "$ans_numba")
+    fi
     if [[ "$ans_numba" = 'y' ]]; then
         echo "Installing Numba."
         conda install numba -y
@@ -336,8 +408,10 @@ if [[ "$ans_matry" = 'y' ]]; then
     fi
 
     # Install Astropy.
-    read -p "====> Install Astropy as a Matryoshka dependency? (yes/[no]) " ans_astropy
-    ans_astropy=$(filter_ans "$ans_astropy")
+    if [[ -z "$ans_astropy" ]]; then
+        read -p "====> Install Astropy as a Matryoshka dependency? (yes/[no]) " ans_astropy
+        ans_astropy=$(filter_ans "$ans_astropy")
+    fi
     if [[ "$ans_astropy" = 'y' ]]; then
         echo "Installing Astropy."
         conda install astropy -y
@@ -348,16 +422,18 @@ if [[ "$ans_matry" = 'y' ]]; then
         fi
     fi
 
-    # Install Tensorflow.
-    read -p "====> Install Tensorflow as a Matryoshka dependency? (yes/[no]) " ans_tf
-    ans_tf=$(filter_ans "$ans_tf")
-    if [[ "$ans_tf" = 'y' ]]; then
-        echo "Installing Tensorflow."
-        conda install tensorflow -y
+    # Install Matplotlib.
+    if [[ -z "$ans_mpl" ]]; then
+        read -p "====> Install Matplotlib as a Matryoshka dependency? (yes/[no]) " ans_mpl
+        ans_mpl=$(filter_ans "$ans_mpl")
+    fi
+    if [[ "$ans_mpl" = 'y' ]]; then
+        echo "Installing Matplotlib."
+        conda install matplotlib -y
         if [[ $? -eq 0 ]]; then
-            echo "Installed Tensorflow."
+            echo "Installed Matplotlib."
         else
-            echo "Warning: Failed to install Tensorflow."
+            echo "Warning: Failed to install Matplotlib."
         fi
     fi
 
@@ -365,8 +441,10 @@ if [[ "$ans_matry" = 'y' ]]; then
     echo "Installing Matryoshka."
 
     if [[ -d "./Matryoshka" ]]; then
-        read -p "====> Remove existing Matryoshka directory? (yes/[no]) " ans_rmmatry
-        ans_rmmatry=$(filter_ans "$ans_rmmatry")
+        if [[ -z "$ans_rmmatry" ]]; then
+            read -p "====> Remove existing Matryoshka directory? (yes/[no]) " ans_rmmatry
+            ans_rmmatry=$(filter_ans "$ans_rmmatry")
+        fi
         if [[ "$ans_rmmatry" = 'y' ]]; then
             rm -rf ./Matryoshka
         fi
@@ -389,12 +467,16 @@ fi
 # BICKER
 # ------------------------------------------------------------------------
 
-read -p "==> Install BICKER? (yes/[no]) " ans_bicker
-ans_bicker=$(filter_ans "$ans_bicker")
+if [[ -z "$ans_bicker" ]]; then
+    read -p "==> Install BICKER? (yes/[no]) " ans_bicker
+    ans_bicker=$(filter_ans "$ans_bicker")
+fi
 if [[ "$ans_bicker" = 'y' ]]; then
     # Install Tensorflow.
-    read -p "====> Install Tensorflow as a BICKER dependency? (yes/[no]) " ans_tf
-    ans_tf=$(filter_ans "$ans_tf")
+    if [[ -z "$ans_tf" ]]; then
+        read -p "====> Install Tensorflow as a BICKER dependency? (yes/[no]) " ans_tf
+        ans_tf=$(filter_ans "$ans_tf")
+    fi
     if [[ "$ans_tf" = 'y' ]]; then
         echo "Installing Tensorflow."
         conda install tensorflow -y
@@ -406,8 +488,10 @@ if [[ "$ans_bicker" = 'y' ]]; then
     fi
 
     # Install SciPy.
-    read -p "====> Install SciPy as a BICKER dependency? (yes/[no]) " ans_scipy
-    ans_scipy=$(filter_ans "$ans_scipy")
+    if [[ -z "$ans_scipy" ]]; then
+        read -p "====> Install SciPy as a BICKER dependency? (yes/[no]) " ans_scipy
+        ans_scipy=$(filter_ans "$ans_scipy")
+    fi
     if [[ "$ans_scipy" = 'y' ]]; then
         echo "Installing SciPy."
         conda install scipy -y
@@ -422,8 +506,10 @@ if [[ "$ans_bicker" = 'y' ]]; then
     echo "Installing BICKER."
 
     if [[ -d "./BICKER" ]]; then
-        read -p "====> Remove existing BICKER directory? (yes/[no]) " ans_rmbicker
-        ans_rmbicker=$(filter_ans "$ans_rmbicker")
+        if [[ -z "$ans_rmbicker" ]]; then
+            read -p "====> Remove existing BICKER directory? (yes/[no]) " ans_rmbicker
+            ans_rmbicker=$(filter_ans "$ans_rmbicker")
+        fi
         if [[ "$ans_rmbicker" = 'y' ]]; then
             rm -rf ./BICKER
         fi
@@ -454,8 +540,10 @@ fi
 echo "Installing bispectrum model package."
 
 if [[ -d "./TripoSH-Model" ]]; then
-    read -p "==> Remove existing bispectrum model directory? (yes/[no]) " ans_rmmod
-    ans_rmmod=$(filter_ans "$ans_rmmod")
+    if [[ -z "$ans_rmmod" ]]; then
+        read -p "==> Remove existing bispectrum model directory? (yes/[no]) " ans_rmmod
+        ans_rmmod=$(filter_ans "$ans_rmmod")
+    fi
     if [[ "$ans_rmmod" = 'y' ]]; then
         rm -rf ./TripoSH-Model
     fi
@@ -482,8 +570,10 @@ cd -
 echo "Installing bispectrum fitting package."
 
 if [[ -d "./TripoSH-Fitting" ]]; then
-    read -p "==> Remove existing bispectrum fitting directory? (yes/[no]) " ans_rmfit
-    ans_rmfit=$(filter_ans "$ans_rmfit")
+    if [[ -z "$ans_rmfit" ]]; then
+        read -p "==> Remove existing bispectrum fitting directory? (yes/[no]) " ans_rmfit
+        ans_rmfit=$(filter_ans "$ans_rmfit")
+    fi
     if [[ "$ans_rmfit" = 'y' ]]; then
         rm -rf ./TripoSH-Fitting
     fi
