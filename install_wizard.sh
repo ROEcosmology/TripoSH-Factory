@@ -259,8 +259,9 @@ if [[ "$ans_classpt" = 'y' ]]; then
         if [[ "$ans_rmclasspt" = 'y' ]]; then
             rm -rf ./CLASS-PT
         fi
+    else
+        git clone https://github.com/Michalychforever/CLASS-PT.git
     fi
-    git clone https://github.com/Michalychforever/CLASS-PT.git
     cd ./CLASS-PT
     git restore .
 
@@ -452,8 +453,9 @@ if [[ "$ans_matry" = 'y' ]]; then
         if [[ "$ans_rmmatry" = 'y' ]]; then
             rm -rf ./Matryoshka
         fi
+    else
+        git clone https://github.com/JDonaldM/Matryoshka
     fi
-    git clone https://github.com/JDonaldM/Matryoshka
     cd ./Matryoshka
     python -m pip install -vvv -e .
 
@@ -551,8 +553,9 @@ if [[ -d "./TripoSH-Model" ]]; then
     if [[ "$ans_rmmod" = 'y' ]]; then
         rm -rf ./TripoSH-Model
     fi
+else
+    git clone https://github.com/ROEcosmology/TripoSH-Model
 fi
-git clone https://github.com/ROEcosmology/TripoSH-Model
 cd ./TripoSH-Model
 git restore .
 
@@ -581,8 +584,9 @@ if [[ -d "./TripoSH-Fitting" ]]; then
     if [[ "$ans_rmfit" = 'y' ]]; then
         rm -rf ./TripoSH-Fitting
     fi
+else
+    git clone https://github.com/ROEcosmology/TripoSH-Fitting
 fi
-git clone https://github.com/ROEcosmology/TripoSH-Fitting
 cd ./TripoSH-Fitting
 git restore .
 
