@@ -262,8 +262,7 @@ if [[ "$ans_classpt" = 'y' ]]; then
     else
         git clone https://github.com/Michalychforever/CLASS-PT.git
     fi
-    cd ./CLASS-PT
-    git restore .
+    cd ./CLASS-PT && git restore .
 
     cp ../pyproject-classy.toml . && mv ./pyproject-classy.toml ./python/pyproject.toml
 
@@ -556,8 +555,7 @@ if [[ -d "./TripoSH-Model" ]]; then
 else
     git clone https://github.com/ROEcosmology/TripoSH-Model
 fi
-cd ./TripoSH-Model
-git restore .
+cd ./TripoSH-Model && git restore .
 
 python -m pip install -vvv -e .
 if [[ $? -eq 0 ]]; then
@@ -587,8 +585,7 @@ if [[ -d "./TripoSH-Fitting" ]]; then
 else
     git clone https://github.com/ROEcosmology/TripoSH-Fitting
 fi
-cd ./TripoSH-Fitting
-git restore .
+cd ./TripoSH-Fitting && git restore .
 
 if [[ $? -eq 0 ]]; then
     echo "Installed bispectrum fitting package."
