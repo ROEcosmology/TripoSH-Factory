@@ -1,0 +1,21 @@
+[build-system]
+requires = [
+    'setuptools>=42',
+    'Cython>=0.25',
+    'oldest-supported-numpy',
+]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = 'classy'
+version = '2.6.3'
+requires-python = '>=3.8'
+dependencies = [
+    'numpy>=1.17',
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ['.']
