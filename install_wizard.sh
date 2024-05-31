@@ -139,7 +139,11 @@ read -p "==> Install OpenMP library? (yes/[no]) " ans_openmp
 ans_openmp=$(filter_ans "$ans_openmp")
 if [[ "$ans_openmp" = 'y' ]]; then
     echo "Installing OpenMP library."
-    conda install libgomp -y
+    if [[ "$OS" = 'Darwin' ]]; then
+        conda install llvm-openmp -y
+    else
+        conda install libgomp -y
+    fi
     if [[ $? -eq 0 ]]; then
         echo "Installed OpenMP library."
     else
