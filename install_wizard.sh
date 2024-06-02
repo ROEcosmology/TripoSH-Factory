@@ -123,7 +123,7 @@ if [[ "$ans_auto" = 'y' ]]; then
     echo "Auto-installing all packages and dependencies."
     echo "The installation process may take a while."
     echo "Press Ctrl+C to abort the installation."
-    sleep 3
+    sleep 1
 
     # Set all flags to 'yes'.
     ans_compiler='y'
@@ -245,9 +245,6 @@ if [[ "$ans_classpt" = 'y' ]]; then
         fi
     fi
 
-    CONDA_INCLUDE=${CONDA_PREFIX}/include
-    CONDA_LIB=${CONDA_PREFIX}/lib
-
     # Install CLASS-PT
     echo "Installing CLASS-PT."
 
@@ -266,26 +263,8 @@ if [[ "$ans_classpt" = 'y' ]]; then
     cd ./CLASS-PT && git restore .
 
     cp ../pyproject-classy.toml . && mv ./pyproject-classy.toml ./python/pyproject.toml
-
-    if [[ "$OS" = 'Darwin' ]]; then
-        LDFLAG_OMP='-lomp'
-    else
-        LDFLAG_OMP='-lgomp'
-    fi
-
-    sed -i "s|CCFLAG.*=.*-g -fPIC -ggdb3|CCFLAG=-g -fPIC -ggdb3 -I${CONDA_INCLUDE}|g" Makefile
-    sed -i "s|LDFLAG.*=.*-g -fPIC|LDFLAG=-g -fPIC -L${CONDA_LIB} -lopenblas ${LDFLAG_OMP}|g" Makefile
-    sed -i "s|OMPFLAG.*=.*-fopenmp|OMPFLAG=-Xpreprocessor -fopenmp|g" Makefile
-    sed -i "s|OPENBLAS.* =.*|OPENBLAS=|g" Makefile
-
-    sed -i "s|cp python/setup.py python/autosetup.py||g" Makefile
-    sed -i "s|grep -v \"lgomp\" python/setup.py > python/autosetup.py||g" Makefile
-    sed -i "s|autosetup.py install|-m pip install -vvv -e .|g" Makefile
-    sed -i "s|rm python/autosetup.py||g" Makefile
-
-    sed -i "s|/Users/gcabass/anaconda3/envs/openblas_test/include|${CONDA_INCLUDE}|g" python/setup.py
-    sed -i "s|/Users/gcabass/anaconda3/envs/openblas_test/lib/libopenblas.dylib|-L${CONDA_LIB}' '-lopenblas|g" python/setup.py
-    sed -i "s|'-lgomp'|${LDFLAG_OMP}|g" python/setup.py
+    cp ../setup-classy.py . && mv ./setup-classy.py ./python/setup.py
+    cp ../Makefile-classpt . && mv ./Makefile-classpt ./Makefile
 
     make clean
     make
