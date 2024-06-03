@@ -250,7 +250,7 @@ if [[ "$ans_classpt" = 'y' ]]; then
     cp ../Makefile-classpt . && mv ./Makefile-classpt ./Makefile
 
     make clean
-    make
+    make -j
     if [[ $? -eq 0 ]]; then
         echo "Installed CLASS-PT."
     else

@@ -40,7 +40,11 @@ OPTFLAG = -O4 -ffast-math
 #OPTFLAG = -fast
 
 # your openmp flag (comment for compiling without openmp)
+ifeq ($(OS),Darwin)
 OMPFLAG   = -Xpreprocessor -fopenmp
+else
+OMPFLAG   = -fopenmp
+endif
 #OMPFLAG   = -mp -mp=nonuma -mp=allcores -g
 #OMPFLAG   = -openmp
 
@@ -204,7 +208,7 @@ tar: $(C_ALL) $(C_TEST) $(H_ALL) $(PRE_ALL) $(INI_ALL) $(MISC_FILES) $(HYREC) $(
 	tar czvf class.tar.gz $(C_ALL) $(H_ALL) $(PRE_ALL) $(INI_ALL) $(MISC_FILES) $(HYREC) $(PYTHON_FILES)
 
 classy: libclass.a python/classy.pyx python/cclassy.pxd
-	cd python; export CC=$(CC); $(PYTHON) -m pip install -vvv -e .
+	cd python; export CC=$(CC); export OMPFLAG="$(OMPFLAG)"; export INCLUDES="$(INCLUDES)"; $(PYTHON) -m pip install -vvv -e .
 
 clean: .base
 	rm -rf $(WRKDIR);

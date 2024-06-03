@@ -1,4 +1,5 @@
 import os
+import platform
 import subprocess as sbp
 
 import numpy as nm
@@ -19,8 +20,8 @@ compiler = os.environ.get('CC', 'gcc')
 includes = [nm.get_include(), "../include",]
 if os.environ.get('INCLUDES', None):
     includes += [
-        include_path.lstrip('-L')
-        for include_path in os.environ['INCLUDES'].split('')
+        include_path.lstrip('-I')
+        for include_path in os.environ['INCLUDES'].split()
     ]
 
 libs = ['class', 'openblas',]
@@ -35,10 +36,15 @@ else:
 cflags = []
 ldflags = []
 
-omp_smoketest = os.environ.get('OMPFLAG', None)
-if omp_smoketest:
-    cflags += ['-Xpreprocessor', '-fopenmp',]
-    ldflags += ['-Xpreprocessor', '-fopenmp', '-lomp',]
+ompflag = os.environ.get('OMPFLAG', None)
+if ompflag:
+    cflags += ompflag.split()
+    if platform.system().lower() == 'darwin':
+        ldflags += ['-Xpreprocessor', '-fopenmp',]
+        # libs += ['omp',]
+    if platform.system().lower() == 'linux':
+        ldflags += ['-fopenmp',]
+        # libs += ['gomp',]
 
 classy = Extension(
     'classy',
