@@ -343,7 +343,7 @@ if [[ -z "$ans_pmc" ]]; then
 fi
 if [[ "$ans_pmc" = 'y' ]]; then
     echo "Installing pocoMC."
-    python -m pip install -vvv pocomc
+    python -m pip install -vvv 'pocomc<1'
     if [[ $? -eq 0 ]]; then
         echo "Installed pocoMC."
     else
