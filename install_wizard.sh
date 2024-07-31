@@ -89,7 +89,7 @@ if [[ "$ans_newenv" = 'y' ]]; then
     if [[ "$flag_createnv" = true ]]; then
         echo "Creating new Conda environment: '$env_name'"
         conda create --name "$env_name" -y
-        if [[ $? -eq 0 ]]; then
+        if [[ $? -ne 0 ]]; then
             echo "Error: Failed to create Conda environment: '$env_name'"
             exit 1
         else
@@ -212,7 +212,7 @@ if [[ -z "$ans_core" ]]; then
 fi
 if [[ "$ans_core" = 'y' ]]; then
     echo "Installing core packages."
-    conda install python pip -y
+    conda install "python<3.11" pip -y
     if [[ $? -eq 0 ]]; then
         echo "Installed core packages."
     else
@@ -343,7 +343,7 @@ if [[ -z "$ans_pmc" ]]; then
 fi
 if [[ "$ans_pmc" = 'y' ]]; then
     echo "Installing pocoMC."
-    python -m pip install -vvv 'pocomc<1'
+    python -m pip install -vvv 'pocomc<=0.2.2'
     if [[ $? -eq 0 ]]; then
         echo "Installed pocoMC."
     else
@@ -368,7 +368,7 @@ if [[ "$ans_matry" = 'y' ]]; then
     fi
     if [[ "$ans_tf" = 'y' ]]; then
         echo "Installing Tensorflow."
-        conda install tensorflow -y
+        conda install "tensorflow<2.16" -y
         if [[ $? -eq 0 ]]; then
             echo "Installed Tensorflow."
         else
@@ -437,8 +437,8 @@ if [[ "$ans_matry" = 'y' ]]; then
         git clone https://github.com/JDonaldM/Matryoshka
     fi
     cd ./Matryoshka && git restore .
-    python -m pip install -vvv -e .
 
+    python -m pip install -vvv -e .
     if [[ $? -eq 0 ]]; then
         echo "Installed Matryoshka."
     else
@@ -465,7 +465,7 @@ if [[ "$ans_bicker" = 'y' ]]; then
     fi
     if [[ "$ans_tf" = 'y' ]]; then
         echo "Installing Tensorflow."
-        conda install tensorflow -y
+        conda install "tensorflow<2.16" -y
         if [[ $? -eq 0 ]]; then
             echo "Installed Tensorflow."
         else
@@ -498,12 +498,14 @@ if [[ "$ans_bicker" = 'y' ]]; then
         fi
         if [[ "$ans_rmbicker" = 'y' ]]; then
             rm -rf ./BICKER
-            curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
-            unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
+            # curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
+            # unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
+            git clone https://github.com/ROEcosmology/BICKER.git
         fi
     else
-        curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
-        unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
+        # curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
+        # unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
+        git clone https://github.com/ROEcosmology/BICKER.git
     fi
     cd ./BICKER && git restore .
 
