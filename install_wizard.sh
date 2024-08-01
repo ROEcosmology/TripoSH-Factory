@@ -270,6 +270,13 @@ if [[ "$ans_classpt" = 'y' ]]; then
     make -j
     if [[ $? -eq 0 ]]; then
         echo "Installed CLASS-PT."
+        echo "*.egg-info" >> .gitignore
+        echo "libclass.a" >> .gitignore
+        echo "classy.*.so" >> .gitignore
+        echo "class" >> .gitignore
+        git restore python/classy.c
+        git restore Makefile python/setup.py
+        rm python/pyproject.toml
     else
         echo "Error: Failed to install CLASS-PT."
         exit 1
