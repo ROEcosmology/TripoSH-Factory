@@ -262,9 +262,9 @@ if [[ "$ans_classpt" = 'y' ]]; then
     fi
     cd ./CLASS-PT && git restore .
 
-    cp ../pyproject-classy.toml . && mv ./pyproject-classy.toml ./python/pyproject.toml
-    cp ../setup-classy.py . && mv ./setup-classy.py ./python/setup.py
-    cp ../Makefile-classpt . && mv ./Makefile-classpt ./Makefile
+    cp ../conf/pyproject-classy.toml . && mv ./pyproject-classy.toml ./python/pyproject.toml
+    cp ../conf/setup-classy.py . && mv ./setup-classy.py ./python/setup.py
+    cp ../conf/Makefile-classpt . && mv ./Makefile-classpt ./Makefile
 
     make clean
     make -j
@@ -438,10 +438,10 @@ if [[ "$ans_matry" = 'y' ]]; then
         fi
         if [[ "$ans_rmmatry" = 'y' ]]; then
             rm -rf ./Matryoshka
-            git clone https://github.com/JDonaldM/Matryoshka
+            git clone https://github.com/ROEcosmology/Matryoshka
         fi
     else
-        git clone https://github.com/JDonaldM/Matryoshka
+        git clone https://github.com/ROEcosmology/Matryoshka
     fi
     cd ./Matryoshka && git restore .
 
