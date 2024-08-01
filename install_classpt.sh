@@ -108,6 +108,23 @@ fi
 
 echo "Activated Conda environment: '${CONDA_DEFAULT_ENV}'"
 
+# Check if conda-forge is the top-priority channel.
+channel_listing=$(echo "$(conda config --show channels)" | awk '/^  -/ {print $2}' | tr -d ' ')
+top_priority_channel=$(echo "${channel_listing}" | head -1)
+if [ "${top_priority_channel}" != "conda-forge" ]; then
+    echo "Warning: conda-forge is not the top-priority channel."
+    echo "We recommend setting conda-forge as the top-priority channel."
+    if [[ -z "ans_pri_forge" ]]; then
+        read -p "==> Set conda-forge as the top-priority channel? (yes/[no]) " ans_pri_forge
+        ans_pri_forge=$(filter_ans "$ans_pri_forge")
+    fi
+    if [[ "$ans_pri_forge" = 'y' ]]; then
+        conda config --add channels conda-forge
+        # conda config --set channel_priority strict
+        echo "Set conda-forge as the top-priority channel."
+    fi
+fi
+
 
 # ========================================================================
 # Auto-Installation
