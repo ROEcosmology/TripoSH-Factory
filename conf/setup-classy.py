@@ -1,33 +1,45 @@
+#!/usr/bin/env python3
+from dbm.ndbm import library
+from logging import root
 import os
-import platform
 import subprocess as sbp
 
-import numpy as nm
-from Cython.Distutils import build_ext, Extension
+import numpy as np
+from Cython.Distutils import Extension, build_ext
 from setuptools import setup
 
 
-# Recover the CLASS version
-with open(os.path.join('..', 'include', 'common.h'), 'r') as v_file:
-    for line in v_file:
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+
+# -- Package -------------------------------------------------------------
+
+PKGNAME = 'classy'
+
+with open(os.path.join(root_dir, "include", "common.h"), 'r') as info_file:
+    for line in info_file:
         if line.find("_VERSION_") != -1:
-            # get rid of the " and the v
-            VERSION = line.split()[-1][2:-1]
+            # Remove quotation marks and prefixes.
+            version = line.split()[-1].strip("\"'").lstrip('v')
             break
 
-compiler = os.environ.get('CC', 'gcc')
 
-includes = [nm.get_include(), "../include",]
-if os.environ.get('INCLUDES', None):
-    includes += [
+# -- Build ---------------------------------------------------------------
+
+compiler = os.getenv('CC', 'gcc')
+
+include_dirs = [np.get_include(), os.path.join(root_dir, "include"),]
+if (includes := os.getenv('INCLUDES')) is not None:
+    include_dirs += [
         include_path.lstrip('-I')
-        for include_path in os.environ['INCLUDES'].split()
+        for include_path in includes.split()
     ]
+
+library_dirs = [os.path.join(root_dir, "build/lib"),]
 
 libs = ['class', 'openblas',]
 
-mvec_smoketest = sbp.Popen([compiler, '-lmvec'], stderr=sbp.PIPE)
-_, mvec_stderr = mvec_smoketest.communicate()
+_, mvec_stderr = sbp.Popen([compiler, '-lmvec'], stderr=sbp.PIPE).communicate()
 if b'mvec' not in mvec_stderr:
     libs += ['mvec', 'm',]
 else:
@@ -36,30 +48,24 @@ else:
 cflags = []
 ldflags = []
 
-ompflag = os.environ.get('OMPFLAG', None)
-if ompflag:
-    cflags += ompflag.split()
-    if platform.system().lower() == 'darwin':
-        ldflags += ['-Xpreprocessor', '-fopenmp',]
-        # libs += ['omp',]
-    if platform.system().lower() == 'linux':
-        ldflags += ['-fopenmp',]
-        # libs += ['gomp',]
+if os.getenv('CFLAGS_OMP'):
+    cflags += os.getenv('CFLAGS_OMP').split()
+if os.getenv('LDFLAGS_OMP'):
+    ldflags += os.getenv('LDFLAGS_OMP').split()
 
 classy = Extension(
-    'classy',
-    ["classy.pyx"],
-    include_dirs=includes,
+    PKGNAME,
+    sources=[f"{PKGNAME}.pyx",],
+    include_dirs=include_dirs,
     libraries=libs,
-    library_dirs=["../",],
+    library_dirs=library_dirs,
     extra_compile_args=cflags,
     extra_link_args=ldflags,
 )
 
 setup(
-    name='classy',
-    version=VERSION,
-    description='Python interface to the Cosmological Boltzmann code CLASS',
+    name=PKGNAME,
+    version=version,
     url='http://www.class-code.net',
     cmdclass={'build_ext': build_ext},
     ext_modules=[classy,],

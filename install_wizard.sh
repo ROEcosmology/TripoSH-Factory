@@ -1,24 +1,33 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #
 # @file install_wizard.sh
 # @author Mike S Wang
-# @brief Installation wizard for TripoSH bispectrum modelling
-#        and fitting packages.
+# @brief Installation wizard for TripoSH suite.
 #
-
-echo "Installation wizard: TripoSH bispectrum modelling and fitting packages"
 
 
 # ========================================================================
 # Preamble
 # ========================================================================
 
-# @brief Filter prompt yes-or-no answer to 'y' or 'n'.
+# @brief Filter prompt response to 'y' (yes) or 'n' (no).
 #
-function filter_ans () {
-    local ans="$1"
-    echo $(echo "$ans" | tr '[:upper:]' '[:lower:]')
+function filter_response () {
+    [[ "$1" =~ ^([yY][eE][sS]|[yY])$ ]] && echo "y" || echo "n"
 }
+
+# @brief Colourised `echo`.
+#
+function cecho () {
+    echo -e "\033[1;34m$1\033[0m"
+}
+
+PYTHON_VERSION='<3.11'
+NUMPY_VERSION='<2'
+TENSORFLOW_VERSION='<2.16'
+POCOMC_VERSION='<=0.2.2'
+
+cecho ":: TripoSH suite installation wizard ::"
 
 
 # ========================================================================
@@ -26,16 +35,17 @@ function filter_ans () {
 # ========================================================================
 
 # ------------------------------------------------------------------------
-# OS
+# Platform
 # ------------------------------------------------------------------------
 
-OS=$(uname -s)
+OS="$(uname -s)"
+MACH="$(uname -m)"
 
 # Set environment variables.
-if [[ ${OS} = 'Darwin' ]]; then
-    if [[ $(uname -m) = 'arm64' ]]; then
+if [[ "$OS" == 'Darwin' ]]; then
+    if [[ "$MACH" == 'arm64' ]]; then
         export MACOSX_DEPLOYMENT_TARGET=11.0
-    elif [[ $(uname -m) = 'x86_64' ]]; then
+    elif [[ "$MACH" == 'x86_64' ]]; then
         export MACOSX_DEPLOYMENT_TARGET=10.9
     fi
 fi
@@ -45,564 +55,434 @@ fi
 # Conda
 # ------------------------------------------------------------------------
 
-read -p "==> Create a new Conda environment? (yes/[no]) " ans_newenv
-ans_newenv=$(filter_ans "$ans_newenv")
-if [[ "$ans_newenv" = 'y' ]]; then
+ans_newenv='n'
+read -p "$(cecho '==> Create a new Conda environment? (y/[n]) ')" ans_newenv
+ans_newenv="$(filter_response ${ans_newenv})"
+if [[ "${ans_newenv}" == 'y' ]]; then
     # Ask for the environment name.
-    read -p "====> Enter the name of the new environment: " env_name
-    if [[ -z "$env_name" ]]; then
-        echo "Warning: Empty environment name is reset to 'triposh' by default."
+    read -p "$(cecho '====> Enter the name of the new environment: ')" env_name
+    if [[ -z "${env_name}" ]]; then
+        cecho "\033[Warning: Empty environment name is reset to 'triposh' by default."
         env_name='triposh'
     fi
 
     # Detect existing environment.
-    flag_createnv=false
+    flag_createnv='false'
     if conda env list | grep -q "^${env_name}\s"; then
-        echo "Warning: Conda environment '$env_name' already exists."
-        read -p "====> Remove existing Conda environment? (yes/[no]) " ans_rmenv
-        ans_rmenv=$(filter_ans "$ans_rmenv")
-        if [[ "$ans_rmenv" = 'y' ]]; then
+        cecho "\033[Warning: Conda environment '${env_name}' already exists."
+        read -p "$(cecho '====> Remove existing Conda environment? (y/[n]) ')" ans_rmenv
+        ans_rmenv="$(filter_response ${ans_rmenv})"
+        if [[ "${ans_rmenv}" == 'y' ]]; then
             # Remove existing environment.
-            echo "Removing Conda environment: '$env_name'"
-            conda env remove --name "$env_name" -y
+            cecho "Removing Conda environment: '${env_name}'"
+            conda env remove --name "${env_name}" -y
             if [[ $? -eq 0 ]]; then
-                echo "Removed Conda environment: '$env_name'"
+                cecho "Removed Conda environment: '${env_name}'"
             else
-                echo "Error: Failed to remove Conda environment: '$env_name'"
+                cecho "\033[Error: Failed to remove Conda environment: '${env_name}'"
                 exit 1
             fi
             flag_createnv=true
         else
-            read -p "====> Activate existing Conda environment? (yes/[no]) " ans_actenv
+            read -p "$(cecho '====> Activate existing Conda environment? (y/[n]) ')" ans_actenv
             # Designate existing environment to be activated.
-            ans_actenv=$(filter_ans "$ans_actenv")
-            if [[ "$ans_actenv" != 'y' ]]; then
-                echo "Attention: Installation aborted."
+            ans_actenv="$(filter_response ${ans_actenv})"
+            if [[ "${ans_actenv}" != 'y' ]]; then
+                cecho "\033[Warning: Installation aborted."
                 exit 0
             fi
         fi
     else
-        flag_createnv=true
+        flag_createnv='true'
     fi
 
     # Create new Conda environment.
-    if [[ "$flag_createnv" = true ]]; then
-        echo "Creating new Conda environment: '$env_name'"
-        conda create --name "$env_name" -y
-        if [[ $? -ne 0 ]]; then
-            echo "Error: Failed to create Conda environment: '$env_name'"
-            exit 1
+    if [[ "${flag_createnv}" == 'true' ]]; then
+        cecho "Creating new Conda environment: '${env_name}'"
+        conda create --name "${env_name}" "python${PYTHON_VERSION}" "numpy${NUMPY_VERSION}" -y
+        if [[ $? -eq 0 ]]; then
+            cecho "Created Conda environment: '${env_name}'"
         else
-            echo "Created Conda environment: '$env_name'"
+            cecho "\033[Error: Failed to create Conda environment '${env_name}'"
+            exit 1
         fi
     fi
 
     # Activate the new environment.
-    echo "Activating Conda environment: '$env_name'"
-    source $(conda info --base)/etc/profile.d/conda.sh
-    conda activate "$env_name"
-    if [[ ${CONDA_DEFAULT_ENV} != "$env_name" ]]; then
-        echo "Error: Failed to activate Conda environment: '$env_name'."
+    cecho "Activating Conda environment: '${env_name}'"
+    source "$(conda info --base)"/etc/profile.d/conda.sh
+    conda activate "${env_name}"
+    if [[ "${CONDA_DEFAULT_ENV}" != "${env_name}" ]]; then
+        cecho "\033[Error: Failed to activate Conda environment '${env_name}'"
         exit 1
     fi
+else
+    cecho "Active Conda environment: '${CONDA_DEFAULT_ENV}'"
+    read -p "$(cecho '==> Change to another Conda environment? (y/[n]) ')" ans_chenv
+    ans_chenv="$(filter_response ${ans_chenv})"
+    if [[ "${ans_chenv}" == 'y' ]]; then
+        read -p "$(cecho '====> Enter the name of the Conda environment: ')" env_name
+        source "$(conda info --base)"/etc/profile.d/conda.sh
+        conda activate "${env_name}"
+    fi
 fi
-
-echo "Activated Conda environment: '${CONDA_DEFAULT_ENV}'"
+export CONDA_ACTIVE_ENV="${CONDA_DEFAULT_ENV}"
+cecho "Active Conda environment: '${CONDA_ACTIVE_ENV}'"
 
 # Check if conda-forge is the top-priority channel.
-channel_listing=$(echo "$(conda config --show channels)" | awk '/^  -/ {print $2}' | tr -d ' ')
-top_priority_channel=$(echo "${channel_listing}" | head -1)
-if [ "${top_priority_channel}" != "conda-forge" ]; then
-    echo "Warning: conda-forge is not the top-priority channel."
-    echo "We recommend setting conda-forge as the top-priority channel."
-    if [[ -z "ans_pri_forge" ]]; then
-        read -p "==> Set conda-forge as the top-priority channel? (yes/[no]) " ans_pri_forge
-        ans_pri_forge=$(filter_ans "$ans_pri_forge")
-    fi
-    if [[ "$ans_pri_forge" = 'y' ]]; then
+top_priority_channel="$(conda config --show channels | awk '/^  -/ {print $2}' | tr -d ' ' | head -1)"
+if [ "${top_priority_channel}" != 'conda-forge' ]; then
+    cecho "\033[Warning: conda-forge is not the top-priority channel."
+    read -p "$(cecho '==> Set conda-forge as the top-priority channel? (y/[n]) ')" ans_prioforge
+    ans_prioforge="$(filter_response ${ans_prioforge})"
+    if [[ "${ans_prioforge}" == 'y' ]]; then
         conda config --add channels conda-forge
         # conda config --set channel_priority strict
-        echo "Set conda-forge as the top-priority channel."
+        cecho "Set conda-forge as the top-priority channel."
     fi
 fi
 
 
 # ========================================================================
-# Auto-Installation
+# Installation
 # ========================================================================
 
-echo "The installation wizard offers a guided installation process as well as an auto-installation process."
-echo "The latter is recommended only for a clean directory and Conda environment."
+# ------------------------------------------------------------------------
+# Auto-installation
+# ------------------------------------------------------------------------
 
-read -p "==> Auto-install all packages and dependencies? (yes/[no]) " ans_auto
-ans_auto=$(filter_ans "$ans_auto")
-if [[ "$ans_auto" = 'y' ]]; then
-    echo "Auto-installing all packages and dependencies."
-    echo "The installation process may take a while."
-    echo "Press Ctrl+C to abort the installation."
+cecho "The installation wizard offers a guided installation process as well as an automatic one."
+cecho "The latter is recommended only for a clean directory and Conda environment."
+
+read -p "$(cecho '==> Auto-install all packages and dependencies? (y/[n]) ')" ans_autoins
+ans_autoins="$(filter_response ${ans_autoins})"
+if [[ "${ans_autoins}" == 'y' ]]; then
+    cecho "Auto-installing all packages and dependencies."
+    cecho "The installation process may take a while."
+    cecho "Press Ctrl+C to abort."
     sleep 1
 
     # Set all flags to 'yes'.
     ans_compiler='y'
     ans_openmp='y'
-    ans_core='y'
+    ans_maths='y'
+    ans_standard='y'
+    ans_accel='y'
+    ans_statest='y'
 
     ans_classpt='y'
     ans_rmclasspt='y'
-    ans_openblas='y'
-
-    ans_gslfftw='y'
-    ans_libcuba='y'
-
-    ans_iminuit='y'
-    ans_pmc='y'
 
     ans_matry='y'
     ans_rmmatry='y'
-    ans_tf='y'
-    ans_numba='y'
-    ans_astropy='y'
-    ans_mpl='y'
 
     ans_bicker='y'
     ans_rmbicker='y'
-    ans_scipy='y'
+
+    ans_iminuit='y'
+    ans_pmc='y'
 
     ans_rmmod='y'
     ans_rmfit='y'
 fi
 
 
-# ========================================================================
-# Dependencies
-# ========================================================================
-
 # ------------------------------------------------------------------------
-# Build tools
+# Dependencies
 # ------------------------------------------------------------------------
 
 # Install compiler suite.
-if [[ -z "ans_compiler" ]]; then
-    read -p "==> Install Conda compiler suite? (yes/[no]) " ans_compiler
-    ans_compiler=$(filter_ans "$ans_compiler")
+if [[ -z "${ans_compiler}" ]]; then
+    read -p "$(cecho '==> Install Conda compiler suite? (y/[n]) ')" ans_compiler
+    ans_compiler="$(filter_response ${ans_compiler})"
 fi
-if [[ "$ans_compiler" = 'y' ]]; then
-    echo "Installing Conda compiler suite."
+if [[ "${ans_compiler}" == 'y' ]]; then
+    cecho "Installing Conda compiler suite."
+
+    # Clear Conda activated environment stack.
+    for i in $(seq "${CONDA_SHLVL}"); do
+        conda deactivate
+    done
+    conda activate "${CONDA_ACTIVE_ENV}"
+
     conda install cxx-compiler c-compiler -y
     if [[ $? -eq 0 ]]; then
-        echo "Installed Conda compiler suite."
+        cecho "Installed Conda compiler suite."
     else
-        echo "Warning: Failed to install Conda compiler suite."
+        cecho "\033[Warning: Failed to install Conda compiler suite."
     fi
 fi
 
 if [[ -z "$CC" ]]; then
-    read -p "====> Enter the C compiler (as none is set): " CC
+    read -p "$(cecho '====> Enter the C compiler (as none is set): ')" CC
 fi
 if [[ -z "$CXX" ]]; then
-    read -p "====> Enter the C++ compiler (as none is set): " CXX
+    read -p "$(cecho '====> Enter the C++ compiler (as none is set): ')" CXX
 fi
 
 # Install OpenMP library.
-if [[ -z "$ans_openmp" ]]; then
-    read -p "==> Install OpenMP library? (yes/[no]) " ans_openmp
-    ans_openmp=$(filter_ans "$ans_openmp")
+if [[ -z "${ans_openmp}" ]]; then
+    read -p "$(cecho '==> Install OpenMP library? (y/[n]) ')" ans_openmp
+    ans_openmp="$(filter_response ${ans_openmp})"
 fi
-if [[ "$ans_openmp" = 'y' ]]; then
-    echo "Installing OpenMP library."
+if [[ "${ans_openmp}" == 'y' ]]; then
+    cecho "Installing OpenMP library."
     if [[ "$OS" = 'Darwin' ]]; then
         conda install llvm-openmp -y
     else
         conda install libgomp -y
     fi
     if [[ $? -eq 0 ]]; then
-        echo "Installed OpenMP library."
+        cecho "Installed OpenMP library."
     else
-        echo "Warning: Failed to install OpenMP library."
+        cecho "\033[Warning: Failed to install OpenMP library."
     fi
 fi
 
-# Install core packages.
-if [[ -z "$ans_core" ]]; then
-    read -p "==> Install core packages including Python and Pip? (yes/[no]) " ans_core
-    ans_core=$(filter_ans "$ans_core")
+# Install mathematical libraries.
+if [[ -z "${ans_maths}" ]]; then
+    read -p "$(cecho '==> Install mathematical libraries including OpenBLAS, GSL, FFTW and Cuba? (y/[n]) ')" ans_maths
+    ans_maths="$(filter_response ${ans_maths})"
 fi
-if [[ "$ans_core" = 'y' ]]; then
-    echo "Installing core packages."
-    conda install "python<3.11" pip -y
+if [[ "${ans_maths}" == 'y' ]]; then
+    cecho "Installing mathematical libraries."
+    conda install openblas gsl fftw libcuba -y
     if [[ $? -eq 0 ]]; then
-        echo "Installed core packages."
+        cecho "Installed mathematical libraries."
     else
-        echo "Warning: Failed to install core packages."
+        cecho "\033[Warning: Failed to install mathematical libraries."
+    fi
+fi
+
+# Install standard packages.
+if [[ -z "${ans_standard}" ]]; then
+    read -p "$(cecho '==> Install standard packages including Python ('${PYTHON_VERSION:-unconstrained}'), NumPy ('${NUMPY_VERSION:-unconstrained}'), SciPy, Astropy and Matplotlib? (y/[n]) ')" ans_standard
+    ans_standard="$(filter_response ${ans_standard})"
+fi
+if [[ "${ans_standard}" == 'y' ]]; then
+    cecho "Installing standard packages."
+    conda install "python${PYTHON_VERSION}" "numpy${NUMPY_VERSION}" scipy astropy matplotlib -y
+    if [[ $? -eq 0 ]]; then
+        cecho "Installed standard packages."
+    else
+        cecho "\033[Warning: Failed to install standard packages."
+    fi
+fi
+
+# Install accelerator packages.
+if [[ -z "${ans_accel}" ]]; then
+    read -p "$(cecho '==> Install accelerator packages including TensorFlow ('${TENSORFLOW_VERSION:-unconstrained}') and Numba? (y/[n]) ')" ans_accel
+    ans_accel="$(filter_response ${ans_accel})"
+fi
+if [[ "${ans_accel}" == 'y' ]]; then
+    cecho "Installing accelerator packages."
+    conda install "tensorflow${TENSORFLOW_VERSION}" numba -y
+    if [[ $? -eq 0 ]]; then
+        cecho "Installed accelerator packages."
+    else
+        cecho "\033[Warning: Failed to install accelerator packages."
+    fi
+fi
+
+# Install statistical estimation packages.
+if [[ -z "${ans_statest}" ]]; then
+    read -p "$(cecho '==> Install statistical estimation packages including iminuit and pocoMC('${POCOMC_VERSION:-unconstrained}') (y/[n]) ')" ans_statest
+    ans_statest="$(filter_response ${ans_statest})"
+fi
+if [[ "${ans_statest}" == 'y' ]]; then
+    cecho "Installing statistical estimation packages."
+    conda install iminuit -y && python -m pip install "pocomc${POCOMC_VERSION}"
+    if [[ $? -eq 0 ]]; then
+        cecho "Installed statistical estimation packages."
+    else
+        cecho "\033[Warning: Failed to install statistical estimation packages."
     fi
 fi
 
 
 # ------------------------------------------------------------------------
-# CLASS-PT
+# Components
 # ------------------------------------------------------------------------
 
-if [[ -z "$ans_classpt" ]]; then
-    read -p "==> Install CLASS-PT? (yes/[no]) " ans_classpt
-    ans_classpt=$(filter_ans "$ans_classpt")
+# Install CLASS-PT.
+if [[ -z "${ans_classpt}" ]]; then
+    read -p "$(cecho '==> Install CLASS-PT? (y/[n]) ')" ans_classpt
+    ans_classpt="$(filter_response ${ans_classpt})"
 fi
-if [[ "$ans_classpt" = 'y' ]]; then
-    # Install OpenBLAS library
-    if [[ -z "$ans_openblas" ]]; then
-        read -p "====> Install OpenBLAS library as a CLASS-PT dependency? (yes/[no]) " ans_openblas
-        ans_openblas=$(filter_ans "$ans_openblas")
-    fi
-    if [[ "$ans_openblas" = 'y' ]]; then
-        echo "Installing OpenBLAS library."
-        conda install openblas -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed OpenBLAS library."
-        else
-            echo "Warning: Failed to install OpenBLAS library."
-        fi
-    fi
+if [[ "${ans_classpt}" == 'y' ]]; then
+    cecho "Installing CLASS-PT."
 
-    # Install CLASS-PT
-    echo "Installing CLASS-PT."
-
-    if [[ -d "./CLASS-PT" ]]; then
-        if [[ -z "$ans_rmclasspt" ]]; then
-            read -p "====> Remove existing CLASS-PT directory? (yes/[no]) " ans_rmclasspt
-            ans_rmclasspt=$(filter_ans "$ans_rmclasspt")
+    flag_gitclone='false'
+    subdir='./CLASS-PT'
+    if [[ -d "${subdir}" ]]; then
+        if [[ -z "${ans_rmclasspt}" ]]; then
+            read -p "$(cecho '====> Remove existing CLASS-PT directory? (y/[n]) ')" ans_rmclasspt
+            ans_rmclasspt="$(filter_response ${ans_rmclasspt})"
         fi
-        if [[ "$ans_rmclasspt" = 'y' ]]; then
-            rm -rf ./CLASS-PT
-            git clone https://github.com/Michalychforever/CLASS-PT.git
+        if [[ "${ans_rmclasspt}" == 'y' ]]; then
+            rm -rf "${subdir}"
+            flag_gitclone='true'
         fi
     else
+        flag_gitclone='true'
+    fi
+    if [[ "${flag_gitclone}" == 'true' ]]; then
         git clone https://github.com/Michalychforever/CLASS-PT.git
     fi
-    cd ./CLASS-PT && git restore .
 
-    cp ../conf/pyproject-classy.toml . && mv ./pyproject-classy.toml ./python/pyproject.toml
-    cp ../conf/setup-classy.py . && mv ./setup-classy.py ./python/setup.py
-    cp ../conf/Makefile-classpt . && mv ./Makefile-classpt ./Makefile
+    cd "${subdir}" && git restore .
+    yes | cp ../conf/Makefile-classpt ./Makefile
+    yes | cp ../conf/pyproject-classy.toml ./python/pyproject.toml
+    yes | cp ../conf/setup-classy.py ./python/setup.py
 
     make clean
     make -j
     if [[ $? -eq 0 ]]; then
-        echo "Installed CLASS-PT."
-        echo "*.egg-info" >> .gitignore
-        echo "libclass.a" >> .gitignore
-        echo "classy.*.so" >> .gitignore
-        echo "class" >> .gitignore
-        git restore python/classy.c
-        git restore Makefile python/setup.py
-        rm python/pyproject.toml
+        cecho "Installed CLASS-PT."
+        cecho "pyproject.toml" >> .gitignore
+        cecho "*.so" >> .gitignore
+        cecho "*.egg-info" >> .gitignore
     else
-        echo "Error: Failed to install CLASS-PT."
+        cecho "\033[Error: Failed to install CLASS-PT."
         exit 1
     fi
 
     cd -
 fi
 
-
-# ------------------------------------------------------------------------
-# GSL & FFTW
-# ------------------------------------------------------------------------
-
-if [[ -z "$ans_gslfftw" ]]; then
-    read -p "==> Install GSL and FFTW libraries? (yes/[no]) " ans_gslfftw
-    ans_gslfftw=$(filter_ans "$ans_gslfftw")
+# Install Matryoshka.
+if [[ -z "${ans_matry}" ]]; then
+    read -p "$(cecho '==> Install Matryoshka? (y/[n]) ')" ans_matry
+    ans_matry="$(filter_response ${ans_matry})"
 fi
-if [[ "$ans_gslfftw" = 'y' ]]; then
-    echo "Installing GSL and FFTW libraries."
-    conda install gsl fftw -y
-    if [[ $? -eq 0 ]]; then
-        echo "Installed GSL and FFTW libraries."
-    else
-        echo "Warning: Failed to install GSL and FFTW libraries."
-    fi
-fi
+if [[ "${ans_matry}" == 'y' ]]; then
+    cecho "Installing Matryoshka."
 
-
-# ------------------------------------------------------------------------
-# libcuba
-# ------------------------------------------------------------------------
-
-if [[ -z "$ans_libcuba" ]]; then
-    read -p "==> Install Cuba library? (yes/[no]) " ans_libcuba
-    ans_libcuba=$(filter_ans "$ans_libcuba")
-fi
-if [[ "$ans_libcuba" = 'y' ]]; then
-    echo "Installing Cuba library."
-    conda install libcuba -y
-    if [[ $? -eq 0 ]]; then
-        echo "Installed Cuba library."
-    else
-        echo "Warning: Failed to install Cuba library."
-    fi
-fi
-
-
-# ------------------------------------------------------------------------
-# iminuit & pocoMC
-# ------------------------------------------------------------------------
-
-# Install iminuit.
-if [[ -z "$ans_iminuit" ]]; then
-    read -p "==> Install iminuit? (yes/[no]) " ans_iminuit
-    ans_iminuit=$(filter_ans "$ans_iminuit")
-fi
-if [[ "$ans_iminuit" = 'y' ]]; then
-    echo "Installing iminuit."
-    conda install iminuit -y
-    if [[ $? -eq 0 ]]; then
-        echo "Installed iminuit."
-    else
-        echo "Warning: Failed to install iminuit."
-    fi
-fi
-
-# Install pocoMC.
-if [[ -z "$ans_pmc" ]]; then
-    read -p "==> Install pocoMC? (yes/[no]) " ans_pmc
-    ans_pmc=$(filter_ans "$ans_pmc")
-fi
-if [[ "$ans_pmc" = 'y' ]]; then
-    echo "Installing pocoMC."
-    python -m pip install -vvv 'pocomc<=0.2.2'
-    if [[ $? -eq 0 ]]; then
-        echo "Installed pocoMC."
-    else
-        echo "Warning: Failed to install pocoMC."
-    fi
-fi
-
-
-# ------------------------------------------------------------------------
-# Matryoshka
-# ------------------------------------------------------------------------
-
-if [[ -z "$ans_matry" ]]; then
-    read -p "==> Install Matryoshka? (yes/[no]) " ans_matry
-    ans_matry=$(filter_ans "$ans_matry")
-fi
-if [[ "$ans_matry" = 'y' ]]; then
-    # Install Tensorflow.
-    if [[ -z "$ans_tf" ]]; then
-        read -p "====> Install Tensorflow as a Matryoshka dependency? (yes/[no]) " ans_tf
-        ans_tf=$(filter_ans "$ans_tf")
-    fi
-    if [[ "$ans_tf" = 'y' ]]; then
-        echo "Installing Tensorflow."
-        conda install "tensorflow<2.16" -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed Tensorflow."
-        else
-            echo "Warning: Failed to install Tensorflow."
+    flag_gitclone='false'
+    subdir='./Matryoshka'
+    if [[ -d "${subdir}" ]]; then
+        if [[ -z "${ans_rmmatry}" ]]; then
+            read -p "$(cecho '====> Remove existing Matryoshka directory? (y/[n]) ')" ans_rmmatry
+            ans_rmmatry="$(filter_response ${ans_rmmatry})"
         fi
-    fi
-
-    # Install Numba.
-    if [[ -z "$ans_numba" ]]; then
-        read -p "====> Install Numba as a Matryoshka dependency? (yes/[no]) " ans_numba
-        ans_numba=$(filter_ans "$ans_numba")
-    fi
-    if [[ "$ans_numba" = 'y' ]]; then
-        echo "Installing Numba."
-        conda install numba -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed Numba."
-        else
-            echo "Warning: Failed to install Numba."
-        fi
-    fi
-
-    # Install Astropy.
-    if [[ -z "$ans_astropy" ]]; then
-        read -p "====> Install Astropy as a Matryoshka dependency? (yes/[no]) " ans_astropy
-        ans_astropy=$(filter_ans "$ans_astropy")
-    fi
-    if [[ "$ans_astropy" = 'y' ]]; then
-        echo "Installing Astropy."
-        conda install astropy -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed Astropy."
-        else
-            echo "Warning: Failed to install Astropy."
-        fi
-    fi
-
-    # Install Matplotlib.
-    if [[ -z "$ans_mpl" ]]; then
-        read -p "====> Install Matplotlib as a Matryoshka dependency? (yes/[no]) " ans_mpl
-        ans_mpl=$(filter_ans "$ans_mpl")
-    fi
-    if [[ "$ans_mpl" = 'y' ]]; then
-        echo "Installing Matplotlib."
-        conda install matplotlib -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed Matplotlib."
-        else
-            echo "Warning: Failed to install Matplotlib."
-        fi
-    fi
-
-    # Install Matryoshka.
-    echo "Installing Matryoshka."
-
-    if [[ -d "./Matryoshka" ]]; then
-        if [[ -z "$ans_rmmatry" ]]; then
-            read -p "====> Remove existing Matryoshka directory? (yes/[no]) " ans_rmmatry
-            ans_rmmatry=$(filter_ans "$ans_rmmatry")
-        fi
-        if [[ "$ans_rmmatry" = 'y' ]]; then
-            rm -rf ./Matryoshka
-            git clone https://github.com/ROEcosmology/Matryoshka
+        if [[ "${ans_rmmatry}" == 'y' ]]; then
+            rm -rf "${subdir}"
+            flag_gitclone='true'
         fi
     else
+        flag_gitclone='true'
+    fi
+    if [[ "${flag_gitclone}" == 'true' ]]; then
         git clone https://github.com/ROEcosmology/Matryoshka
     fi
-    cd ./Matryoshka && git restore .
+
+    cd "${subdir}" && git restore .
 
     python -m pip install -vvv -e .
     if [[ $? -eq 0 ]]; then
-        echo "Installed Matryoshka."
+        cecho "Installed Matryoshka."
     else
-        echo "Warning: Failed to install Matryoshka."
+        cecho "\033[Warning: Failed to install Matryoshka."
     fi
 
     cd -
 fi
 
-
-# ------------------------------------------------------------------------
-# BICKER
-# ------------------------------------------------------------------------
-
-if [[ -z "$ans_bicker" ]]; then
-    read -p "==> Install BICKER? (yes/[no]) " ans_bicker
-    ans_bicker=$(filter_ans "$ans_bicker")
+# Install BICKER.
+if [[ -z "${ans_bicker}" ]]; then
+    read -p "$(cecho '==> Install BICKER? (y/[n]) ')" ans_bicker
+    ans_bicker="$(filter_response ${ans_bicker})"
 fi
-if [[ "$ans_bicker" = 'y' ]]; then
-    # Install Tensorflow.
-    if [[ -z "$ans_tf" ]]; then
-        read -p "====> Install Tensorflow as a BICKER dependency? (yes/[no]) " ans_tf
-        ans_tf=$(filter_ans "$ans_tf")
-    fi
-    if [[ "$ans_tf" = 'y' ]]; then
-        echo "Installing Tensorflow."
-        conda install "tensorflow<2.16" -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed Tensorflow."
-        else
-            echo "Warning: Failed to install Tensorflow."
-        fi
-    fi
+if [[ "${ans_bicker}" == 'y' ]]; then
+    cecho "Installing BICKER."
 
-    # Install SciPy.
-    if [[ -z "$ans_scipy" ]]; then
-        read -p "====> Install SciPy as a BICKER dependency? (yes/[no]) " ans_scipy
-        ans_scipy=$(filter_ans "$ans_scipy")
-    fi
-    if [[ "$ans_scipy" = 'y' ]]; then
-        echo "Installing SciPy."
-        conda install scipy -y
-        if [[ $? -eq 0 ]]; then
-            echo "Installed SciPy."
-        else
-            echo "Warning: Failed to install SciPy."
+    flag_gitclone='false'
+    subdir='./BICKER'
+    if [[ -d "${subdir}" ]]; then
+        if [[ -z "${ans_rmbicker}" ]]; then
+            read -p "$(cecho '====> Remove existing BICKER directory? (y/[n]) ')" ans_rmbicker
+            ans_rmbicker="$(filter_response ${ans_rmbicker})"
         fi
-    fi
-
-    # Install BICKER.
-    echo "Installing BICKER."
-
-    if [[ -d "./BICKER" ]]; then
-        if [[ -z "$ans_rmbicker" ]]; then
-            read -p "====> Remove existing BICKER directory? (yes/[no]) " ans_rmbicker
-            ans_rmbicker=$(filter_ans "$ans_rmbicker")
-        fi
-        if [[ "$ans_rmbicker" = 'y' ]]; then
-            rm -rf ./BICKER
-            # curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
-            # unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
-            git clone https://github.com/ROEcosmology/BICKER.git
+        if [[ "${ans_rmbicker}" == 'y' ]]; then
+            rm -rf "${subdir}"
+            flag_gitclone='true'
         fi
     else
-        # curl -L "https://github.com/ROEcosmology/TripoSH-Fitting/releases/download/dummy-bicker/BICKER-main.zip" -o ./BICKER.zip
-        # unzip BICKER.zip && rm BICKER.zip && mv ./BICKER-main ./BICKER
+        flag_gitclone='true'
+    fi
+    if [[ "${flag_gitclone}" == 'true' ]]; then
         git clone https://github.com/ROEcosmology/BICKER.git
     fi
-    cd ./BICKER && git restore .
+
+    cd "${subdir}" && git restore .
 
     python -m pip install -vvv -e .
     if [[ $? -eq 0 ]]; then
-        echo "Installed BICKER."
+        cecho "Installed BICKER."
     else
-        echo "Warning: Failed to install BICKER."
+        cecho "\033[Warning: Failed to install BICKER."
     fi
 
     cd -
 fi
 
-
-# ========================================================================
-# Components
-# ========================================================================
-
-# ------------------------------------------------------------------------
-# Bispectrum Model
-# ------------------------------------------------------------------------
-
-echo "Installing bispectrum model package."
-
-if [[ -d "./TripoSH-Model" ]]; then
-    if [[ -z "$ans_rmmod" ]]; then
-        read -p "==> Remove existing bispectrum model directory? (yes/[no]) " ans_rmmod
-        ans_rmmod=$(filter_ans "$ans_rmmod")
+# Install TripoSH-Model.
+cecho "Installing TripoSH-Model."
+subdir='./TripoSH-Model'
+if [[ -d "${subdir}" ]]; then
+    if [[ -z "${ans_rmmod}" ]]; then
+        read -p "$(cecho '==> Remove existing TripoSH-Model directory? (y/[n]) ')" ans_rmmod
+        ans_rmmod="$(filter_response ${ans_rmmod})"
     fi
-    if [[ "$ans_rmmod" = 'y' ]]; then
-        rm -rf ./TripoSH-Model
-        git clone https://github.com/ROEcosmology/TripoSH-Model
+    if [[ "${ans_rmmod}" == 'y' ]]; then
+        rm -rf "${subdir}"
+        flag_gitclone='true'
     fi
 else
+    flag_gitclone='true'
+fi
+if [[ "${flag_gitclone}" == 'true' ]]; then
     git clone https://github.com/ROEcosmology/TripoSH-Model
 fi
-cd ./TripoSH-Model && git restore .
+
+cd "${subdir}" && git restore .
 
 python -m pip install -vvv -e .
 if [[ $? -eq 0 ]]; then
-    echo "Installed bispectrum model package."
+    cecho "Installed TripoSH-Model."
 else
-    echo "Error: Failed to install bispectrum model package."
+    cecho "\033[Error: Failed to install TripoSH-Model."
     exit 1
 fi
 
 cd -
 
-
-# ------------------------------------------------------------------------
-# Bispectrum Fitting
-# ------------------------------------------------------------------------
-
-echo "Installing bispectrum fitting package."
-
-if [[ -d "./TripoSH-Fitting" ]]; then
-    if [[ -z "$ans_rmfit" ]]; then
-        read -p "==> Remove existing bispectrum fitting directory? (yes/[no]) " ans_rmfit
-        ans_rmfit=$(filter_ans "$ans_rmfit")
+# Install TripoSH-Fitting.
+cecho "Installing TripoSH-Fitting."
+subdir='./TripoSH-Fitting'
+if [[ -d "${subdir}" ]]; then
+    if [[ -z "${ans_rmfit}" ]]; then
+        read -p "$(cecho '==> Remove existing TripoSH-Fitting directory? (y/[n]) ')" ans_rmfit
+        ans_rmfit="$(filter_response ${ans_rmfit})"
     fi
-    if [[ "$ans_rmfit" = 'y' ]]; then
-        rm -rf ./TripoSH-Fitting
-        git clone https://github.com/ROEcosmology/TripoSH-Fitting
+    if [[ "${ans_rmfit}" == 'y' ]]; then
+        rm -rf "${subdir}"
+        flag_gitclone='true'
     fi
 else
+    flag_gitclone='true'
+fi
+if [[ "${flag_gitclone}" == 'true' ]]; then
     git clone https://github.com/ROEcosmology/TripoSH-Fitting
 fi
-cd ./TripoSH-Fitting && git restore .
 
+cd "${subdir}" && git restore .
+
+# python -m pip install -vvv -e .
 if [[ $? -eq 0 ]]; then
-    echo "Installed bispectrum fitting package."
+    cecho "Installed TripoSH-Fitting."
 else
-    echo "Error: Failed to install bispectrum fitting package."
+    cecho "\033[Error: Failed to install TripoSH-Fitting."
     exit 1
 fi
 
